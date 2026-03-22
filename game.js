@@ -33,8 +33,6 @@ const OBS_DEFS = [
   { emoji:'🚧', w:46, h:50, stack:false },
   { emoji:'🍩', w:50, h:44, stack:true  }, // donuts stacked 2 high
   { emoji:'🚔', w:82, h:56, stack:false },
-  { emoji:'👰', w:46, h:80, stack:false },
-  { emoji:'🤵', w:46, h:80, stack:false },
   { emoji:'💒', w:68, h:88, stack:false },
 ];
 
@@ -543,5 +541,7 @@ document.getElementById('menuBtn') .addEventListener('click', () => { state='men
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 initBg();
-showMenu();
+// showMenu(); // DEBUG: skip menus, go straight to game
+document.getElementById('menuScreen').classList.add('hidden');
+showPlaying();
 loop();
