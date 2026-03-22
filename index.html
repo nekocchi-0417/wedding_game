@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Zootopia Wedding Run 💍</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="container">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <!-- Menu -->
+    <div id="menuScreen" class="overlay">
+      <div class="title-wrap">
+        <div class="title-emoji">🦊🐰💍</div>
+        <h1>Zootopia Run</h1>
+        <p class="subtitle">A Wedding Adventure</p>
+      </div>
+      <button id="startBtn" class="btn">Play</button>
+      <div class="hs-label">Best: <span id="menuHs">0</span></div>
+    </div>
+
+    <!-- Character Select -->
+    <div id="selectScreen" class="overlay hidden">
+      <h2>Choose Your Runner</h2>
+      <div id="charGrid"></div>
+      <div class="select-btns">
+        <button id="backBtn" class="btn btn-secondary">Back</button>
+        <button id="playBtn" class="btn">Run!</button>
+      </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="gameoverScreen" class="overlay hidden">
+      <h2>Busted! 🚔</h2>
+      <div class="score-display">
+        <div>Score <span id="finalScore">0</span></div>
+        <div class="hs-row">Best <span id="finalHs">0</span></div>
+      </div>
+      <div id="unlockMsg" class="unlock-msg hidden"></div>
+      <div class="go-btns">
+        <button id="retryBtn" class="btn">Try Again</button>
+        <button id="menuBtn" class="btn btn-secondary">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
