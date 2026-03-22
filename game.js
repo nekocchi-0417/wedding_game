@@ -18,9 +18,9 @@ const BASE_SPEED    = 5;
 const CHARS = [
   { id:0, name:'Nick Wilde', emoji:'🦊', jumpMult:1.00, glideMult:1.00, unlockAt:0,    stat:'Balanced'    },
   { id:1, name:'Judy Hopps', emoji:'🐰', jumpMult:1.30, glideMult:0.80, unlockAt:0,    stat:'High Jump'   },
-  { id:2, name:'Flash',      emoji:'🦥', jumpMult:0.80, glideMult:2.20, unlockAt:300,  stat:'Long Glide'  },
-  { id:3, name:'Chief Bogo', emoji:'🐃', jumpMult:0.95, glideMult:1.10, unlockAt:800,  stat:'Steady'      },
-  { id:4, name:'Mr. Big',    emoji:'🐭', jumpMult:1.45, glideMult:1.40, unlockAt:1500, stat:'Tiny Legend' },
+  { id:2, name:'Flash',      emoji:'🦥', jumpMult:0.80, glideMult:2.20, unlockAt:0, stat:'Long Glide'  },
+  { id:3, name:'Chief Bogo', emoji:'🐃', jumpMult:0.95, glideMult:1.10, unlockAt:0, stat:'Steady'      },
+  { id:4, name:'Mr. Big',    emoji:'🐭', jumpMult:1.45, glideMult:1.40, unlockAt:0, stat:'Tiny Legend' },
 ];
 
 // ── Obstacles ─────────────────────────────────────────────────────────────────
@@ -38,10 +38,10 @@ let state        = 'menu';   // menu | select | playing | gameover
 let score        = 0;
 let highScore    = +( localStorage.getItem('zwr_hs') || 0 );
 let selectedChar = 0;
-let unlocked     = new Set( JSON.parse(localStorage.getItem('zwr_unlocked') || '[0,1]') );
+let unlocked     = new Set([0, 1, 2, 3, 4]);
 let frame        = 0;
 
-let player, obstacles, particles, bgClouds, bgBuildings;
+let player, obstacles = [], particles = [], bgClouds, bgBuildings;
 let speed, spawnTimer, isHolding, newUnlock;
 
 // ── Background init ───────────────────────────────────────────────────────────
@@ -253,6 +253,8 @@ function draw() {
   ctx.setLineDash([]);
 
   // Obstacles
+  ctx.globalAlpha  = 1;
+  ctx.fillStyle    = 'white';
   ctx.textBaseline = 'bottom';
   ctx.textAlign    = 'center';
   for (const obs of obstacles) {
@@ -285,7 +287,7 @@ function draw() {
 }
 
 function drawPlayer() {
-  if (state === 'menu') return;
+  if (state === 'menu' || state === 'select' || state === 'instruct' || !player) return;
   const p  = player;
   const bob = p.onGround ? Math.sin(frame * 0.22) * 2.5 : 0;
   const sx  = 1 + (1 - p.squish) * 0.28;
@@ -304,6 +306,8 @@ function drawPlayer() {
   // Tilt in air
   if (!p.onGround) ctx.rotate(p.vy * 0.012);
 
+  ctx.globalAlpha = 1;
+  ctx.fillStyle   = 'white';
   ctx.font = p.h + 'px serif';
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
@@ -370,11 +374,18 @@ function roundRect(x, y, w, h, r) {
 }
 
 // ── Game Loop ─────────────────────────────────────────────────────────────────
+let loopRunning = false;
 function loop() {
-  update();
-  draw();
+  loopRunning = true;
+  try {
+    update();
+    draw();
+  } catch (e) {
+    console.error('Game loop error:', e);
+  }
   requestAnimationFrame(loop);
 }
+function ensureLoop() { if (!loopRunning) loop(); }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function showMenu() {
@@ -411,11 +422,19 @@ function buildCharGrid() {
   }
 }
 
+function showInstructions() {
+  document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('instructScreen').classList.remove('hidden');
+  state = 'instruct';
+}
+
 function showPlaying() {
   document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('instructScreen').classList.add('hidden');
   document.getElementById('gameoverScreen').classList.add('hidden');
-  state = 'playing';
   initGame();
+  state = 'playing';
+  ensureLoop();
 }
 
 function showGameover() {
@@ -457,7 +476,8 @@ document.addEventListener('keyup', e => {
 // ── Button wiring ─────────────────────────────────────────────────────────────
 document.getElementById('startBtn').addEventListener('click', () => { state='select'; showSelect(); });
 document.getElementById('backBtn') .addEventListener('click', () => { state='menu';   showMenu();   });
-document.getElementById('playBtn') .addEventListener('click', showPlaying);
+document.getElementById('playBtn') .addEventListener('click', showInstructions);
+document.getElementById('goBtn')  .addEventListener('click', showPlaying);
 document.getElementById('retryBtn').addEventListener('click', showPlaying);
 document.getElementById('menuBtn') .addEventListener('click', () => { state='menu';   showMenu();   });
 
