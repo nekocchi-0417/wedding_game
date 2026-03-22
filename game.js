@@ -46,8 +46,8 @@ let selectedChar = 0;
 let unlocked     = new Set([0, 1, 2, 3, 4]);
 let frame        = 0;
 
-let player, obstacles = [], particles = [], bgClouds, bgBuildings;
-let speed, spawnTimer, isHolding, newUnlock;
+let player, obstacles = [], particles = [], rings = [], bgClouds, bgBuildings;
+let speed, spawnTimer, ringTimer, bonusScore, isHolding, newUnlock;
 
 // ── Background init ───────────────────────────────────────────────────────────
 function initBg() {
@@ -69,10 +69,13 @@ function initGame() {
   player = { x:130, y:GROUND_Y, vy:0, w:58, h:58, onGround:true, char, squish:1 };
   obstacles  = [];
   particles  = [];
+  rings      = [];
   score      = 0;
+  bonusScore = 0;
   frame      = 0;
   speed      = BASE_SPEED;
   spawnTimer = 80;
+  ringTimer  = 120;
   isHolding  = false;
   newUnlock  = null;
   initBg();
@@ -87,7 +90,7 @@ function update() {
   }
 
   frame++;
-  score  = Math.floor(frame / 6);
+  score  = Math.floor(frame / 6) + bonusScore;
   speed  = BASE_SPEED + Math.floor(score / 150) * 0.7;
 
   // Player physics
@@ -126,6 +129,24 @@ function update() {
       spawnBurst(player.x, player.y - player.h * 0.6);
       endGame();
       return;
+    }
+  }
+
+  // Spawn rings
+  ringTimer--;
+  if (ringTimer <= 0) {
+    rings.push({ x: W + 20, y: GROUND_Y - 90 - Math.random() * 80, w: 36, h: 36, t: frame });
+    ringTimer = 180 + Math.floor(Math.random() * 120);
+  }
+
+  // Move rings + collect
+  for (let i = rings.length - 1; i >= 0; i--) {
+    rings[i].x -= speed;
+    if (rings[i].x + rings[i].w < -10) { rings.splice(i, 1); continue; }
+    if (ringHitTest(player, rings[i])) {
+      bonusScore += 25;
+      spawnRingBurst(rings[i].x, rings[i].y);
+      rings.splice(i, 1);
     }
   }
 
@@ -191,6 +212,26 @@ function spawnDust() {
       x: player.x + (Math.random()-0.5)*20, y: player.y,
       vx: (Math.random()-0.5)*3, vy: -Math.random()*2,
       life: 14, emoji: '·', size: 10,
+    });
+  }
+}
+
+function ringHitTest(p, r) {
+  const px = p.x - p.w * 0.35, pw = p.w * 0.70;
+  const py = p.y - p.h * 0.85, ph = p.h * 0.80;
+  return px < r.x + r.w && px + pw > r.x && py < r.y + r.h && py + ph > r.y;
+}
+
+function spawnRingBurst(x, y) {
+  const fx = ['✨','💛','💍','⭐','💫'];
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 7,
+      vy: (Math.random() - 0.7) * 7,
+      life: 22 + Math.random() * 16,
+      emoji: fx[Math.floor(Math.random() * fx.length)],
+      size: 14 + Math.random() * 10,
     });
   }
 }
@@ -273,6 +314,17 @@ function draw() {
       ctx.font = obs.h * 0.92 + 'px serif';
       ctx.fillText(obs.emoji, obs.x + obs.w / 2, obs.y);
     }
+  }
+
+  // Rings (floating collectibles)
+  ctx.globalAlpha  = 1;
+  ctx.fillStyle    = 'white';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  for (const r of rings) {
+    const bob = Math.sin(r.t * 0.06 + frame * 0.08) * 6;
+    ctx.font = r.h + 'px serif';
+    ctx.fillText('💍', r.x + r.w / 2, r.y + r.h / 2 + bob);
   }
 
   // Player
