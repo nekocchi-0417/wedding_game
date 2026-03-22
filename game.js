@@ -3,6 +3,11 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
 
+// ── Music ────────────────────────────────────────────────────────────────────
+const bgm = new Audio('zoo.mp3');
+bgm.loop = true;
+const BGM_START = 16; // skip first 16 seconds
+
 // ── Canvas internal size ───────────────────────────────────────────────────────
 const W = 800, H = 400;
 const GROUND_Y = 308; // player feet rest here
@@ -192,6 +197,7 @@ function spawnDust() {
 
 // ── End Game ──────────────────────────────────────────────────────────────────
 function endGame() {
+  bgm.pause();
   state = 'gameover';
   if (score > highScore) {
     highScore = score;
@@ -435,6 +441,8 @@ function showPlaying() {
   initGame();
   state = 'playing';
   ensureLoop();
+  bgm.currentTime = BGM_START;
+  bgm.play().catch(() => {});
 }
 
 function showGameover() {
