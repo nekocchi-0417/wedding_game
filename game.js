@@ -64,7 +64,7 @@ function initBg() {
 // ── Game init ─────────────────────────────────────────────────────────────────
 function initGame() {
   const char = CHARS[selectedChar];
-  player = { x:130, y:GROUND_Y, vy:0, w:58, h:58, onGround:true, char, squish:1 };
+  player = { x:130, y:GROUND_Y, vy:0, w:58, h:58, onGround:true, char, squish:1, invincible:0 };
   obstacles  = [];
   particles  = [];
   rings      = [];
@@ -121,12 +121,14 @@ function update() {
     if (obstacles[i].x + obstacles[i].w < -30) obstacles.splice(i, 1);
   }
 
-  // Collision (shrunken hitbox for fairness)
+  // Collision – penalty instead of death
+  if (player.invincible > 0) player.invincible--;
   for (const obs of obstacles) {
-    if (hitTest(player, obs)) {
+    if (player.invincible <= 0 && hitTest(player, obs)) {
       spawnBurst(player.x, player.y - player.h * 0.6);
-      endGame();
-      return;
+      bonusScore = Math.max(bonusScore - 30, -Math.floor(frame / 6)); // lose 30 pts, floor at 0 total
+      player.invincible = 90; // ~1.5s immunity
+      player.squish = 0.5;
     }
   }
 
@@ -183,7 +185,7 @@ function spawnObstacle() {
 }
 
 function spawnBurst(x, y) {
-  const fx = ['💥','⭐','✨','💫','❤️','💔'];
+  const fx = ['💥','⭐','✨','💫','-30'];
   for (let i = 0; i < 10; i++) {
     particles.push({
       x, y,
@@ -348,6 +350,12 @@ function drawPlayer() {
   const bob = p.onGround ? Math.sin(frame * 0.22) * 2.5 : 0;
   const sx  = 1 + (1 - p.squish) * 0.28;
   const sy  = p.squish;
+
+  // Blink when invincible
+  if (p.invincible > 0 && Math.floor(p.invincible / 4) % 2 === 0) {
+    ctx.restore = ctx.restore; // still need restore, so just skip drawing
+    return;
+  }
 
   ctx.save();
   ctx.translate(p.x, p.y - p.h / 2 + bob);
