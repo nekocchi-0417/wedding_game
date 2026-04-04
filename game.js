@@ -91,6 +91,12 @@ function update() {
   score  = Math.floor(frame / 6) + bonusScore;
   speed  = BASE_SPEED + Math.floor(score / 150) * 0.7;
 
+  // 1-minute time limit (~3600 frames at 60fps)
+  if (frame >= 3600) {
+    endGame();
+    return;
+  }
+
   // Player physics
   const useGlide = !player.onGround && isHolding && player.vy > 0;
   const grav     = useGlide ? GLIDE_GRAVITY / player.char.glideMult : GRAVITY;
@@ -203,6 +209,11 @@ function doJump() {
     player.vy       = JUMP_VY * player.char.jumpMult;
     player.onGround = false;
     spawnDust();
+  }
+  // Ensure music plays after user interaction (autoplay policy)
+  if (bgm.paused && state === 'playing') {
+    bgm.currentTime = BGM_START;
+    bgm.play().catch(() => {});
   }
 }
 
@@ -418,6 +429,21 @@ function drawHUD() {
     ctx.textAlign = 'center';
     ctx.fillText('✦ GLIDING ✦', player.x, player.y - player.h - 12);
   }
+
+  // Timer pill
+  const secsLeft = Math.max(0, Math.ceil((3600 - frame) / 60));
+  const mins = Math.floor(secsLeft / 60);
+  const secs = String(secsLeft % 60).padStart(2, '0');
+  ctx.fillStyle = secsLeft <= 10 ? 'rgba(200,40,40,0.6)' : 'rgba(0,0,0,0.45)';
+  roundRect(W / 2 - 50, 10, 100, 36, 18);
+  ctx.fillStyle = secsLeft <= 10 ? '#ff6666' : '#ffd700';
+  ctx.font = 'bold 11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('TIME', W / 2, 17);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 22px system-ui';
+  ctx.fillText(mins + ':' + secs, W / 2, 29);
 
   // Character icon
   ctx.font = '26px serif';
